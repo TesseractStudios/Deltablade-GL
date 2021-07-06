@@ -180,14 +180,9 @@ void Game::tick()
 	}
 }
 
-std::tuple<bool, bool, bool, bool> Game::checkCollision(glm::vec2 position, float radius)
+CollisionDirection Game::checkCollision(glm::vec2 oldPos, glm::vec2 newPos)
 {
-	auto intPos = glm::ivec2(position);
-	bool up = collision_map.checkCollision({position.x + radius, position.y});
-	bool down = collision_map.checkCollision({position.x - radius, position.y});
-	bool left = collision_map.checkCollision({position.x, position.y - radius});
-	bool right = collision_map.checkCollision({position.x, position.y + radius});
-	return {up, down, left, right};
+	return collision_map.checkCollision(oldPos, newPos);
 }
 
 glm::ivec2 Game::getMapDims()

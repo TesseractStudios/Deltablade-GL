@@ -17,7 +17,6 @@ int main()
 	game = new Game(720, 720, "Lucidity");
 	glfwSetErrorCallback(error_callback);
 	
-	// emscripten_set_main_loop(tick, -1, 1);
 	while (!game->closed())
 	{
 		game->tick();

@@ -1,11 +1,13 @@
 #include "headers/sprite.hpp"
 #include "headers/game.hpp"
+#include <iostream>
 
 Sprite::Sprite(int width, int height, int mapIndex, Game *game, Shader shader) : mapIndex(mapIndex), shader(shader), width(width), height(height)
 {
 	initBuffers();
 	this->game = game;
 	textureAtlas = 21;
+	// pos = {0, 30};
 }
 
 Sprite::Sprite(int width, int height, int mapIndex, Game *game, const char *vertexPath, const char *fragmentPath) : mapIndex(mapIndex), width(width), height(height)
@@ -14,6 +16,7 @@ Sprite::Sprite(int width, int height, int mapIndex, Game *game, const char *vert
 	this->game = game;
 	shader.Compile(vertexPath, fragmentPath);
 	textureAtlas = 2;
+	// pos = {0, 30};
 }
 
 void Sprite::initBuffers()
@@ -55,26 +58,64 @@ void Sprite::setTextureAtlas(GLuint atlasID)
 	textureAtlas = atlasID;
 }
 
-std::tuple<bool, bool, bool, bool> Sprite::checkCollision(glm::vec2 pos)
+CollisionDirection Sprite::checkCollision(glm::vec2 oldPos, glm::vec2 newPos)
 {
-	return game->checkCollision(pos, 2);
+	return game->checkCollision(oldPos, newPos);
+}
+
+void Sprite::collide()
+{
+	vel.y += acc.y;
+	vel.x += acc.x;
+	glm::vec2 collisionVel = vel;
+	CollisionDirection collision = CollisionDirection::None;
+	do
+	{
+		collision = checkCollision(pos, pos + collisionVel);
+		std::cout << collision << std::endl;
+		if (collision == CollisionDirection::Down)
+		{
+			collisionVel.y = collisionVel.y < 0 ? 0 : collisionVel.y;
+			collision = checkCollision(pos, pos + collisionVel);
+			continue;
+		}
+		if (collision == CollisionDirection::Up)
+		{
+			collisionVel.y = collisionVel.y > 0 ? 0 : collisionVel.y;
+			collision = checkCollision(pos, pos + collisionVel);
+			continue;
+		}
+		if (collision == CollisionDirection::Right)
+		{
+			collisionVel.x = collisionVel.x > 0 ? 0 : collisionVel.x;
+			collision = checkCollision(pos, pos + collisionVel);
+			continue;
+		}
+		if (collision == CollisionDirection::Left)
+		{
+			collisionVel.x = collisionVel.x < 0 ? 0 : collisionVel.x;
+			collision = checkCollision(pos, pos + collisionVel);
+			continue;
+		}
+		// else
+	} while (collision != CollisionDirection::None);
+	pos += collisionVel;
 }
 
 void Sprite::update()
 {
-	auto collision = checkCollision(pos + vel + acc);
-	if (!std::get<1>(collision))
-	{
-		vel.y += acc.y;
-		pos.y += vel.y;
-	}
-	else
-		int a = 1;
-	if(!std::get<3>(collision))
-	{
-		vel.x += acc.x;
-		pos.x += vel.x;
-	}
+	// if (!std::get<1>(collision))
+	// {
+	collide();
+	// vel.y += acc.y;
+	// }
+	// else
+	// 	int a = 1;
+	// if(!std::get<3>(collision))
+	// {
+	// vel.x += acc.x;
+	// pos.x += vel.x;
+	// }
 	// if((pos + vel).x >= 2.0f || vel.x > 0.0f)
 	vel.x *= 0.6;
 	vel.y *= 0.93;
@@ -88,22 +129,21 @@ void Sprite::update()
 		vel.y *= 0.0f;
 		pos.y -= (pos.y - 4.0f);
 	}
-	facing = vel;
 	shader.SetMatrix4("transform", transform, true);
 	shader.SetInteger("tex", textureAtlas);
-	if (facing.x > 0)
+	if (vel.x > 0)
 	{
 		shader.SetVector2f("tile", {1.0, 1.0});
-		if (facing.y > 0.1 || pos.y > 4.0f)
+		if (vel.y > 0.1 || pos.y > 4.0f)
 		{
 			shader.SetVector2f("tile", {2.0, 2.0});
 		}
 	}
 
-	else if (facing.x < 0)
+	else if (vel.x < 0)
 	{
 		shader.SetVector2f("tile", {0.0, 0.0});
-		if (facing.y > 0.1 || pos.y > 4.0f)
+		if (vel.y > 0.1 || pos.y > 4.0f)
 		{
 			shader.SetVector2f("tile", {0.0, 1.0});
 		}
@@ -123,14 +163,15 @@ void Sprite::render()
 
 void Sprite::move(float mag)
 {
-	acc += glm::vec2(mag, 0.0f);
+	acc.x += mag;
 }
 
 void Sprite::jump(float mag)
 {
-	auto collision = checkCollision(pos + vel + acc);
-	if (std::get<1>(collision) || pos.y <= 4.0f)
+	auto collision = checkCollision(pos, pos - glm::vec2(0.0, 1.0));
+	if (collision == CollisionDirection::Down || pos.y <= 4.0f)
 	{
-		vel += glm::vec2(0.0f, mag);
+		// vel += glm::vec2(0.0f, mag);
+		vel.y = mag;
 	}
 }

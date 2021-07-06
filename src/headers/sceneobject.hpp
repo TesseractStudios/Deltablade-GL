@@ -14,9 +14,7 @@ public:
 	glm::vec2 acc;
 
 protected:
-	// glm::mat4 originalTransform = glm::mat4(1.0f);
 	glm::mat4 transform = glm::mat4(1.0f);
-	// glm::mat4 position = glm::mat4(1.0f);
 	GLuint textureAtlas;
 	Game* game;
 };

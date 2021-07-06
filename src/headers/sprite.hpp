@@ -3,6 +3,8 @@
 #include "gl.hpp"
 #include "shader.hpp"
 #include "sceneobject.hpp"
+#include "globals.hpp"
+
 class Game;
 
 class Sprite : public SceneObject
@@ -12,6 +14,7 @@ public:
 	Sprite(int width, int height, int mapIndex, Game *game, Shader shader);
 	void render() override;
 	void update() override;
+	void collide();
 	void move(float mag);
 	void jump(float mag);
 	void setTransform(glm::mat4 transform) override;
@@ -20,7 +23,7 @@ public:
 private:
 	void initBuffers();
 	void initTextures();
-	std::tuple<bool, bool, bool, bool> checkCollision(glm::vec2 pos);
+	CollisionDirection checkCollision(glm::vec2 oldPos, glm::vec2 newPos);
 
 private:
 	int width;
